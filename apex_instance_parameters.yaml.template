@@ -1,0 +1,19 @@
+# ==============================================================================
+# APEX Instance Parameters
+#
+# This file defines default configuration settings for an Oracle APEX instance.
+# Review, add and update these parameters as needed for your environment.
+# See available parameters documentation for details:
+# https://docs.oracle.com/en/database/oracle/apex/26.1/aeapi/APEX_INSTANCE_ADMIN.Available-Parameter-Values.html
+# ==============================================================================
+AI_IS_ENABLED: Y
+CHECK_FOR_UPDATES: N
+EXPIRE_FND_USER_ACCOUNTS: N
+ALLOW_DB_MONITOR: Y
+ALLOW_SQL_DEVELOPER_WEB: Y
+DELETE_UPLOADED_FILES_AFTER_DAYS: 5
+MAX_APPLICATION_BACKUPS: 5
+MAX_SESSION_LENGTH_SEC: 36000
+MAX_SESSION_IDLE_SEC: 7200
+ACCOUNT_LIFETIME_DAYS: 365
+WORKSPACE_PROVISION_DEMO_OBJECTS: Y

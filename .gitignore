@@ -1,0 +1,8 @@
+apex/
+oradata/
+ords-config/
+*.bak
+.env
+apex_instance_parameters.yaml
+apex_workspaces.yaml
+apex-latest.zip

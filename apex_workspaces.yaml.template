@@ -1,0 +1,87 @@
+# ==============================================================================
+# APEX Workspace Configuration
+#
+# This file defines your APEX workspaces, including their database schemas,
+# administrative users, and visual parameters.
+# ==============================================================================
+#
+# --- ⚠️ IMPORTANT YAML RULES FOR BEGINNERS ⚠️ ---
+# 1. SPACING MATTERS: YAML relies on exact spaces (indentation). Do not use
+#    the Tab key. Keep the indentation exactly as shown in the examples below.
+# 2. NO INLINE COMMENTS: Do not put comments on the same line as your settings.
+#    (e.g., 'user_name: ADMIN # This is a comment' will cause an error).
+# 3. VALUES: You can leave values blank, or wrap them in quotes ("" or '').
+#
+
+# Define your list of APEX workspaces below:
+workspaces:
+
+  # ==========================================================================
+  # WORKSPACE 1 DEFINITION (Example)
+  # ==========================================================================
+  - workspace_name: ws1
+
+    # The database schema associated with this workspace.
+    # Defaults to 'WKSP_' + workspace name if left blank.
+    # - If the schema does not exist in the database, it will be created automatically.
+    # - If the schema already exists, no additional privileges will be modified.
+    schema_name: wksp_ws1
+
+    # The password for the database schema.
+    # Defaults to your ORACLE_PWD from the .env file if left blank.
+    schema_password: OraCle-#APEX#
+
+    # Define the administrative users for this specific workspace.
+    workspace_users:
+
+      # Administrator username (Defaults to 'ADMIN' if left blank).
+      - user_name: ADMIN
+
+      # Optional: Email address for password resets and notifications.
+        user_email: admin@example.com
+
+      # Optional: A brief description of this user account.
+        user_description: Workspace administrator account.
+
+      # Optional: Initial login password for the user.
+      # Defaults to your ORACLE_PWD from the .env file if left blank.
+        user_password: OraCle-#APEX#
+
+      # Optional: Force the user to change their password on first login (Y or N).
+      # Defaults to 'Y' if left blank. 'N' is convenient for local development.
+        change_password_on_first_use: N
+
+      # ----------------------------------------------------------------------
+      # Need more admin users? Uncomment the lines below and fill in the details.
+      # Make sure the dashes and spacing align exactly with the user above!
+      # ----------------------------------------------------------------------
+      # - user_name: admin2
+      #   user_email: admin2@example.com
+      #   user_description: Workspace admin user 2
+      #   user_password: password
+      #   change_password_on_first_use: Y
+
+    # Define parameters that apply to this workspace.
+    # See all available parameters here:
+    # https://docs.oracle.com/en/database/oracle/apex/26.1/aeapi/APEX_INSTANCE_ADMIN.Available-Parameter-Values.html
+    workspace_parameters:
+        ENV_BANNER_ENABLE: Y
+        ENV_BANNER_COLOR: accent-16
+        ENV_BANNER_LABEL: Workspace 1
+        ENV_BANNER_POS: TOP
+
+  # ==========================================================================
+  # WORKSPACE 2 DEFINITION (Example - Commented Out)
+  # ==========================================================================
+  # - workspace_name: ws2
+  #   schema_name: wksp_ws2
+  #   schema_password: password
+  #   workspace_users:
+  #     - user_name: ws2_admin
+  #       user_password: password
+  #       change_password_on_first_use: Y
+  #   workspace_parameters:
+  #       ENV_BANNER_ENABLE: Y
+  #       ENV_BANNER_COLOR: accent-15
+  #       ENV_BANNER_LABEL: Workspace 2
+  #       ENV_BANNER_POS: TOP
