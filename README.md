@@ -27,6 +27,8 @@ For Linux users (or Windows/macOS users utilizing WSL or the macOS Terminal), a 
 - Creating persistent volume directories.
 - Downloading the latest Oracle APEX and extracting it.
 
+Run automatic setup:
+
 ```bash
 ./setup.sh
 ```
@@ -44,6 +46,7 @@ Download the [latest Oracle APEX](https://download.oracle.com/otn_software/apex/
 Linux users must give permission to the persistent volume directories:
 
 ```bash
+mkdir -p ./oradata ./ords-config
 chgrp -R 54321 ./oradata ./ords-config ./apex
 chmod g+w ./oradata ./ords-config ./apex
 chmod -R g+r ./oradata ./ords-config ./apex
