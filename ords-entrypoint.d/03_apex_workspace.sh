@@ -247,11 +247,11 @@ begin
   if l_count = 0 then
     -- Create workspace parsing schema.
     dbms_output.put_line(
-      'INFO : Creating schema: ' || l_schema)
-    ;
+      'INFO : Creating schema: ' || l_schema
+    );
 
     execute immediate
-      'INFO : create user ' || l_schema ||
+      'create user ' || l_schema ||
       ' identified by "$schema_password_escaped" account unlock';
 
     -- Grant privileges.
@@ -294,7 +294,7 @@ begin
       'INFO : REST enabling the schema ' || l_schema
     );
 
-    ords_admin.enable_schema
+    ords_admin.enable_schema(
       p_schema          => l_schema
     , p_auto_rest_auth  => true
     );
