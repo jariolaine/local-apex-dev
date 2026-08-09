@@ -12,6 +12,7 @@ set -Eeuo pipefail
 SQL_CLI_CONNECTION="sys/\"${ORACLE_PWD}\"@${CONN_STRING:-${DBHOST}:${DBPORT}/${DBSERVICENAME}} as sysdba"
 
 APEX_ADMIN_USER_NAME="${APEX_ADMIN_USER_NAME:-ADMIN}"
+APEX_ADMIN_USER_NAME="${APEX_ADMIN_USER_NAME^^}"
 APEX_ADMIN_USER_PWD="${APEX_ADMIN_USER_PWD:-${ORACLE_PWD}}"
 APEX_ADMIN_USER_EMAIL="${APEX_ADMIN_USER_EMAIL}"
 APEX_INSTANCE_CONFIG="${HOME%/}/apex_instance_parameters.yaml"
@@ -76,10 +77,6 @@ begin
     'INFO : APEX found in the database. Applying instance configurations...'
   );
 
-EOF_SQL
-
-
-cat <<EOF_SQL >> "$SQL_TMP"
   -- Set APEX instance parameters.
 EOF_SQL
 
@@ -103,7 +100,7 @@ while IFS=':' read -r param_name param_value; do
   # Append the command to our PL/SQL block
   cat <<EOF_SQL >> "$SQL_TMP"
   dbms_output.put_line(
-    'Setting APEX instance parameter: $param_name = $param_value'
+    'INFO : Setting APEX instance parameter: $param_name = $param_value'
   );
   apex_instance_admin.set_parameter(
     p_parameter => '${param_name}'

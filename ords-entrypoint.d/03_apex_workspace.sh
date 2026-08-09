@@ -247,16 +247,16 @@ begin
   if l_count = 0 then
     -- Create workspace parsing schema.
     dbms_output.put_line(
-      'Creating schema: ' || l_schema)
+      'INFO : Creating schema: ' || l_schema)
     ;
 
     execute immediate
-      'create user ' || l_schema ||
+      'INFO : create user ' || l_schema ||
       ' identified by "$schema_password_escaped" account unlock';
 
     -- Grant privileges.
     dbms_output.put_line(
-      'Granting privileges to schema: ' || l_schema
+      'INFO : Granting privileges to schema: ' || l_schema
     );
 
     execute immediate
@@ -279,7 +279,7 @@ begin
      where username = l_schema;
 
     dbms_output.put_line(
-      'Granting unlimited quota on tablespace ' ||
+      'INFO : Granting unlimited quota on tablespace ' ||
       l_tablespace ||
       ' to schema ' ||
       l_schema
@@ -288,16 +288,28 @@ begin
     execute immediate
       'alter user ' || l_schema ||
       ' quota unlimited on ' || l_tablespace;
+
+    -- REST enable schema
+    dbms_output.put_line(
+      'INFO : REST enabling the schema ' || l_schema
+    );
+
+    ords_admin.enable_schema
+      p_schema          => l_schema
+    , p_auto_rest_auth  => true
+    );
+
   else
     dbms_output.put_line(
-      'Schema ' || l_schema || ' already exists. Using existing schema.'
+      'WARNING : Schema ' || l_schema || ' already exists. Using existing schema.'
     );
   end if;
 
   -- Create workspace.
   dbms_output.put_line(
-    'Creating workspace: ' || l_workspace
+    'INFO : Creating workspace: ' || l_workspace
   );
+
   apex_instance_admin.add_workspace(
     p_workspace      => l_workspace,
     p_primary_schema => l_schema
@@ -326,7 +338,7 @@ EOF_SQL
     cat <<EOF_SQL >> "$SQL_TMP"
   -- Create workspace ADMIN user
   dbms_output.put_line(
-    'Creating APEX user: ' || $u_name_sql || ' in ' || l_workspace
+    'INFO : Creating APEX user: ' || $u_name_sql || ' in ' || l_workspace
   );
 
   apex_util.create_user(
@@ -352,7 +364,7 @@ EOF_SQL
 
     cat <<EOF_SQL >> "$SQL_TMP"
   dbms_output.put_line(
-    'Setting workspace parameter: ' ||
+    'INFO : Setting workspace parameter: ' ||
     $p_key_sql || ' = ' || $p_val_sql
   );
 

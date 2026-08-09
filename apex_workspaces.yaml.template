@@ -3,6 +3,8 @@
 #
 # This file defines your APEX workspaces, including their database schemas,
 # administrative users, and visual parameters.
+#
+# IMPORTANT: Existing workspaces will not be modified.
 # ==============================================================================
 #
 # --- ⚠️ IMPORTANT YAML RULES FOR BEGINNERS ⚠️ ---
@@ -23,21 +25,22 @@ workspaces:
 
     # The database schema associated with this workspace.
     # Defaults to 'WKSP_' + workspace name if left blank.
-    # - If the schema does not exist in the database, it will be created automatically.
-    # - If the schema already exists, no additional privileges will be modified.
+    # - If the schema does not exist in the database, it will be created with the required privileges and REST enabled.
+    # - If the schema already exists, it will be associated with the workspace as is.
     schema_name: wksp_ws1
 
     # The password for the database schema.
     # Defaults to your ORACLE_PWD from the .env file if left blank.
+    # Note: Password must meet Oracle's strong password requirements.
     schema_password: OraCle-#APEX#
 
     # Define the administrative users for this specific workspace.
     workspace_users:
 
-      # Administrator username (Defaults to 'ADMIN' if left blank).
+      # Username (Defaults to 'ADMIN' if left blank).
       - user_name: ADMIN
 
-      # Optional: Email address for password resets and notifications.
+      # Optional: User email address.
         user_email: admin@example.com
 
       # Optional: A brief description of this user account.
@@ -45,6 +48,7 @@ workspaces:
 
       # Optional: Initial login password for the user.
       # Defaults to your ORACLE_PWD from the .env file if left blank.
+      # Note: Password must meet Oracle's strong password requirements.
         user_password: OraCle-#APEX#
 
       # Optional: Force the user to change their password on first login (Y or N).
@@ -63,7 +67,7 @@ workspaces:
 
     # Define parameters that apply to this workspace.
     # See all available parameters here:
-    # https://docs.oracle.com/en/database/oracle/apex/26.1/aeapi/APEX_INSTANCE_ADMIN.Available-Parameter-Values.html
+    # https://docs.oracle.com/en/database/oracle/apex/26.1/aeapi/APEX_INSTANCE_ADMIN.Available-Parameter-Values.html#GUID-75DCF658-5A76-4E81-B12D-04E254A3D80A__GUID-963D6D01-0CA4-415F-821E-0E8F87166952
     workspace_parameters:
         ENV_BANNER_ENABLE: Y
         ENV_BANNER_COLOR: accent-16

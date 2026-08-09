@@ -30,6 +30,7 @@ For Linux users (or Windows/macOS users utilizing WSL or the macOS Terminal), a 
 Run automatic setup:
 
 ```bash
+chmod u+x ./setup.sh
 ./setup.sh
 ```
 
@@ -53,23 +54,25 @@ chmod -R g+r ./oradata ./ords-config ./apex
 chmod -R go-wx+rX ./apex/images
 ```
 
-## Start Containers
+### Start Containers
 
 > **Important**: Review and update your `.env`, `apex_instance_parameters.yaml`, and `apex_workspaces.yaml` files
 > to match your environment requirements (especially passwords) before proceeding.
 
-Start the database and ORDS containers:
+Start containers:
 
 ```bash
 docker compose up -d
 ```
 
-> **Note:** The first startup will take several minutes as it installs APEX into the fresh Oracle database. Subsequent startups are faster.
+> **Note:** The first startup will take significantly longer.
+> Docker must first download (pull) the required container images,
+> and then the system must set up the database and install APEX from scratch into the fresh Oracle database.
+> Subsequent startups are much faster.
 
-### Checking APEX Installation Progress
+#### Checking APEX Installation Progress
 
-Because the first startup installs APEX from scratch into the database, it can take several minutes depending on your system's hardware.
-You can monitor the installation progress in two ways:
+You can monitor the background installation process in two ways:
 
 To watch the detailed APEX database installation in real-time, run:
 
@@ -88,19 +91,19 @@ docker logs -f ords-node-1
 
 You will know the setup is fully complete and ready to use when the log output settles and indicates that the Oracle REST Data Services server has started.
 
-Alternatively, you can wait for the containers status to change to (healthy):
+Alternatively, you can wait for both containers to show as `(healthy)`:
 
 ```bash
 docker ps -f name=db-26ai-free -f name=ords-node-1
 ```
 
-## Accessing Your Environment
+### Accessing Your Environment
 
 Once running, access your environment at:
 
 
 *   **APEX Administration Service**: [http://localhost:8181/ords/apex_admin](http://localhost:8181/ords/apex_admin)
-    *   **Credentials**: Instance admin user name and user credentials are defined in the `.env` file.
+    *   **Credentials**: Instance admin user name and user password are defined in the `.env` file.
 *   **APEX Development Service**: [http://localhost:8181/ords/apex](http://localhost:8181/ords/apex)
     *   **Credentials**: Workspace names and user credentials are defined in the `apex_workspaces.yaml` file.
 *   **Database (SQLcl)**: Connect as the SYSTEM user, for example:
@@ -109,10 +112,43 @@ Once running, access your environment at:
     docker exec -it ords-node-1 sh -c 'sql -L system/$ORACLE_PWD@$DBHOST:$DBPORT/$DBSERVICENAME'
     ```
 
-## Stop Containers
+### Stop Containers
 
-Stop all containers when finished:
+Stop containers when finished:
 
 ```bash
 docker compose down
 ```
+
+## Configuration Files Overview
+
+This environment relies on three primary configuration files to automate the provisioning of your Oracle Database and ORDS containers. Below is a summary of each file and the key topics they control.
+
+### The Environment File (`.env`)
+
+This file defines the core system passwords, connection settings, and hardware tuning variables. It is the foundation of your Docker Compose deployment.
+
+**Key Topics:**
+
+* **Database & ORDS Security:** Sets the master `ORACLE_PWD` used for the SYS, SYSTEM, and PDBADMIN database users.
+* **ORDS Connection Settings:** Configures how the REST Data Services communicate with the database, including hostnames, ports, service names, and debug logging.
+* **Database Startup Features:** Offers optional toggles for advanced recovery features like Archive Logging and Force Logging.
+* **APEX Administration:** Defines the username, password, and email for the main APEX Instance Administrator (INTERNAL workspace).
+
+---
+
+### APEX Instance Parameters (`apex_instance_parameters.yaml`)
+
+This file dictates the global configuration settings applied to the entire Oracle APEX instance.
+These settings are applied during every startup, allowing you to easily modify instance parameters over time.
+
+---
+
+### APEX Workspaces (`apex_workspaces.yaml`)
+
+This file automates the creation and configuration of individual APEX workspaces and their associated users.
+
+**Key Topics:**
+* **Schema Provisioning:** Maps workspaces to specific database schemas. If a schema does not exist, the setup automatically creates it with the necessary privileges and enables REST. If it already exists, it is associated with the workspace without modifying its existing state.
+* **Workspace Users:** Defines administrative and developer accounts for each workspace, including their emails, initial passwords, and whether they must change their password on the first login.
+* **Workspace-Level Parameters:** Allows you to apply specific settings to individual workspaces.

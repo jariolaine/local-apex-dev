@@ -5,6 +5,8 @@
 # Review, add and update these parameters as needed for your environment.
 # See available parameters documentation for details:
 # https://docs.oracle.com/en/database/oracle/apex/26.1/aeapi/APEX_INSTANCE_ADMIN.Available-Parameter-Values.html
+#
+# NOTE: These settings are applied during every startup, allowing you to easily modify instance parameters over time.
 # ==============================================================================
 AI_IS_ENABLED: Y
 CHECK_FOR_UPDATES: N
