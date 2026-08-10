@@ -1,4 +1,5 @@
 apex/
+ollama/
 oradata/
 ords-config/
 *.bak

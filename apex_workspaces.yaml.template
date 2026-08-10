@@ -2,7 +2,7 @@
 # APEX Workspace Configuration
 #
 # This file defines your APEX workspaces, including their database schemas,
-# administrative users, and visual parameters.
+# administrative users, and parameters.
 #
 # IMPORTANT: Existing workspaces will not be modified.
 # ==============================================================================
@@ -32,7 +32,7 @@ workspaces:
     # The password for the database schema.
     # Defaults to your ORACLE_PWD from the .env file if left blank.
     # Note: Password must meet Oracle's strong password requirements.
-    schema_password: OraCle-#APEX#
+    schema_password: OraCle#26ai
 
     # Define the administrative users for this specific workspace.
     workspace_users:
@@ -49,7 +49,7 @@ workspaces:
       # Optional: Initial login password for the user.
       # Defaults to your ORACLE_PWD from the .env file if left blank.
       # Note: Password must meet Oracle's strong password requirements.
-        user_password: OraCle-#APEX#
+        user_password: OraCle#26ai
 
       # Optional: Force the user to change their password on first login (Y or N).
       # Defaults to 'Y' if left blank. 'N' is convenient for local development.
@@ -73,6 +73,7 @@ workspaces:
         ENV_BANNER_COLOR: accent-16
         ENV_BANNER_LABEL: Workspace 1
         ENV_BANNER_POS: TOP
+        EXPIRE_FND_USER_ACCOUNTS: Y
 
   # ==========================================================================
   # WORKSPACE 2 DEFINITION (Example - Commented Out)

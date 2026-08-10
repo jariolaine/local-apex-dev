@@ -23,7 +23,7 @@ services:
       - ENABLE_ARCHIVELOG=${ENABLE_ARCHIVELOG:-FALSE}
       - ENABLE_FORCE_LOGGING=${ENABLE_FORCE_LOGGING:-FALSE}
     ports:
-      - 127.0.0.1:1521:1521/tcp
+      - 127.0.0.1:${HOST_DB_PORT:-1521}:1521/tcp
     volumes:
       - ./oradata:/opt/oracle/oradata
       - ./db-startup:/opt/oracle/scripts/startup:ro
@@ -45,8 +45,9 @@ services:
       - APEX_ADMIN_USER_NAME=${APEX_ADMIN_USER_NAME:-}
       - APEX_ADMIN_USER_PWD=${APEX_ADMIN_USER_PWD:-}
       - APEX_ADMIN_USER_EMAIL=${APEX_ADMIN_USER_EMAIL:-}
+      - OLLAMA_PULL_MODELS=${OLLAMA_PULL_MODELS:-}
     ports:
-      - 127.0.0.1:8181:8080/tcp
+      - 127.0.0.1:${HOST_ORDS_PORT:-8181}:8080/tcp
     volumes:
       - ./apex:/opt/oracle/apex
       - ./ords-config:/etc/ords/config

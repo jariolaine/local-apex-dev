@@ -12,13 +12,6 @@ echo "======================================="
 
 cd "${PROJECT_HOME}"
 
-# Create directories for container volumes
-echo "INFO: Creating directories for containers persistent volumes."
-
-mkdir -p ./oradata ./ords-config
-chgrp 54321 ./oradata ./ords-config
-chmod g+rw ./oradata ./ords-config
-
 # Download and extract APEX install files
 echo "INFO: Downloading APEX install files..."
 curl -sS -z ./apex-latest.zip -R -O "${APEX_DOWNLOAD_URL}" && \
@@ -27,14 +20,22 @@ echo "INFO: Downloaded APEX install files successfully."
 if [ -f "./apex-latest.zip" ]; then
   echo "INFO: Extracting APEX install files..."
   unzip -q -u ./apex-latest.zip "apex/*"
-  chgrp -R 54321 ./apex
-  chmod -R g+rw ./apex
-  chmod -R go-wx+Xr ./apex/images
   #rm ./apex-latest.zip
 else
   echo "ERROR: Failed to download apex-latest.zip. Aborting setup."
   exit 1
 fi
+
+# Create directories for container volumes
+echo "INFO: Creating directories for containers persistent volumes."
+mkdir -p ./oradata ./ords-config
+
+echo "INFO: Setting permissions for containers persistent volumes."
+chgrp -R 54321 ./oradata ./ords-config ./apex
+chmod g+w ./oradata ./ords-config ./apex
+chmod -R g+r ./oradata ./ords-config ./apex
+chmod -R go-wx+rX ./apex/images
+chmod -R +r ./db-startup ./ords-entrypoint.d
 
 # Copy environment variables template
 if [ ! -f "./.env" ]; then

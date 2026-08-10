@@ -1,0 +1,41 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "1m"
+    max-file: "1"
+
+x-health-defaults: &health-defaults
+  interval: 1m
+  timeout: 15s
+  retries: 5
+  start_period: 15m
+  start_interval: 5s
+
+services:
+
+  ollama:
+    container_name: ollama-llm
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    logging: *default-logging
+    healthcheck:
+      test: [ "CMD-SHELL", "ollama --version > /dev/null || exit 1" ]
+      <<: *health-defaults
+    environment:
+      # https://docs.ollama.com/troubleshooting
+      # - OLLAMA_DEBUG=${OLLAMA_DEBUG:-2}
+      # https://mintlify.wiki/ollama/ollama/advanced/environment-variables
+      - OLLAMA_CONTEXT_LENGTH=${OLLAMA_CONTEXT_LENGTH:-32768}
+      - OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:-1h}
+      - OLLAMA_FLASH_ATTENTION=${OLLAMA_FLASH_ATTENTION:-1}
+      - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-1}
+      - OLLAMA_KV_CACHE_TYPE=${OLLAMA_KV_CACHE_TYPE:-q8_0}
+    volumes:
+      - ./ollama:/root/.ollama
+
+  ords:
+    environment:
+      - OLLAMA_PULL_MODELS=${OLLAMA_PULL_MODELS:-}
+    depends_on:
+      ollama:
+        condition: service_healthy

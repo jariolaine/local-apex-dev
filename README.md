@@ -1,8 +1,8 @@
-# Local Oracle 26ai Free & APEX Dev Environment
+# Local Oracle 26ai Free, APEX & Ollama Dev Environment
 
-A beginner-friendly Docker Compose setup for running a local Oracle Database 26ai Free instance with ORDS and APEX.
+A beginner-friendly Docker Compose setup for running a local Oracle Database 26ai Free instance with ORDS, APEX, and Ollama for local Large Language Models (LLMs).
 
-This project automates the entire process: downloading, installing, and configuring APEX within the database container on startup.
+This project automates the entire process: downloading, installing, and configuring APEX within the database container on startup, while providing a ready-to-use local AI endpoint.
 
 > **Note:** This environment is intended strictly for development and learning purposes.
 
@@ -10,6 +10,7 @@ This project automates the entire process: downloading, installing, and configur
 
 *   **Docker Engine** (with the `docker compose` plugin).
 *   **Linux Tools**: `curl` and `unzip` are required for the automated setup script.
+*   **Optional**: NVIDIA Container Toolkit (only if you intend to enable GPU acceleration for Ollama).
 
 ## Quick Start
 
@@ -52,12 +53,17 @@ chgrp -R 54321 ./oradata ./ords-config ./apex
 chmod g+w ./oradata ./ords-config ./apex
 chmod -R g+r ./oradata ./ords-config ./apex
 chmod -R go-wx+rX ./apex/images
+chmod -R +r ./db-startup ./ords-entrypoint.d
 ```
 
 ### Start Containers
 
 > **Important**: Review and update your `.env`, `apex_instance_parameters.yaml`, and `apex_workspaces.yaml` files
 > to match your environment requirements (especially passwords) before proceeding.
+
+> **Ollama AI Support:** By default, the environment starts *without* Ollama to save system resources.
+> To enable local AI capabilities (for either CPU or NVIDIA GPU), open your `.env` file
+> and uncomment the desired `COMPOSE_FILE` option before starting the containers.
 
 Start containers:
 
@@ -107,10 +113,10 @@ Once running, access your environment at:
 *   **APEX Development Service**: [http://localhost:8181/ords/apex](http://localhost:8181/ords/apex)
     *   **Credentials**: Workspace names and user credentials are defined in the `apex_workspaces.yaml` file.
 *   **Database (SQLcl)**: Connect as the SYSTEM user, for example:
-
     ```bash
     docker exec -it ords-node-1 sh -c 'sql -L system/$ORACLE_PWD@$DBHOST:$DBPORT/$DBSERVICENAME'
     ```
+*   **Ollama API (Internal):** Accessible from within the Oracle Database via `http://ollama:11434/`.
 
 ### Stop Containers
 
@@ -122,7 +128,8 @@ docker compose down
 
 ## Configuration Files Overview
 
-This environment relies on three primary configuration files to automate the provisioning of your Oracle Database and ORDS containers. Below is a summary of each file and the key topics they control.
+This environment relies on three primary configuration files to automate the provisioning of your Oracle Database, APEX, ORDS, and Ollama containers. Below is a summary of each file and the key topics they control.
+
 
 ### The Environment File (`.env`)
 
@@ -131,9 +138,14 @@ This file defines the core system passwords, connection settings, and hardware t
 **Key Topics:**
 
 * **Database & ORDS Security:** Sets the master `ORACLE_PWD` used for the SYS, SYSTEM, and PDBADMIN database users.
-* **ORDS Connection Settings:** Configures how the REST Data Services communicate with the database, including hostnames, ports, service names, and debug logging.
+* **ORDS Connection Settings:** Configures how the REST Data Services communicate with the database,
+including hostnames, ports, service names, and debug logging.
 * **Database Startup Features:** Offers optional toggles for advanced recovery features like Archive Logging and Force Logging.
 * **APEX Administration:** Defines the username, password, and email for the main APEX Instance Administrator (INTERNAL workspace).
+* **Ollama Performance Tuning:** Includes settings to optimize local Large Language Models based on your available RAM/VRAM,
+such as context length, keep-alive duration, flash attention, and parallel request limits.
+* **Ollama Model Auto-Pull:** Uses the `OLLAMA_PULL_MODELS` variable to define a comma-separated list of models
+(e.g., `llama3.1:8b,phi3:mini`) that will automatically download in the background when the environment starts.
 
 ---
 
