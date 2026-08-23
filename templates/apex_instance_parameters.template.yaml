@@ -1,21 +1,32 @@
+---
 # ==============================================================================
 # APEX Instance Parameters
 #
 # This file defines default configuration settings for an Oracle APEX instance.
-# Review, add and update these parameters as needed for your environment.
-# See available parameters documentation for details:
+# Review, add, and update these parameters as needed for the environment.
+# See the APEX instance parameter documentation for details:
 # https://docs.oracle.com/en/database/oracle/apex/26.1/aeapi/APEX_INSTANCE_ADMIN.Available-Parameter-Values.html
 #
-# NOTE: These settings are applied during every startup, allowing you to easily modify instance parameters over time.
+# NOTE: These settings are reapplied during every ORDS container startup.
 # ==============================================================================
-AI_IS_ENABLED: Y
-CHECK_FOR_UPDATES: N
-EXPIRE_FND_USER_ACCOUNTS: N
-ALLOW_DB_MONITOR: Y
-ALLOW_SQL_DEVELOPER_WEB: Y
+#
+# --- ⚠️ IMPORTANT YAML SYNTAX RULES ⚠️ ---
+# 1.  SPACING MATTERS: YAML relies on exact spaces (indentation). Do not use
+#     the Tab key. Keep the indentation exactly as shown in the examples below.
+# 2.  NO INLINE COMMENTS: Inline comments are not supported.
+#     Text after a '#' on a setting line may be interpreted as part of the value.
+#     Put comments on their own lines instead.
+# 3.  VALUES: Values may be unquoted, quoted with "" or '', or left blank.
+#
+
+AI_IS_ENABLED: "Y"
+CHECK_FOR_UPDATES: "N"
+EXPIRE_FND_USER_ACCOUNTS: "N"
+ALLOW_DB_MONITOR: "Y"
+ALLOW_SQL_DEVELOPER_WEB: "Y"
 DELETE_UPLOADED_FILES_AFTER_DAYS: 5
 MAX_APPLICATION_BACKUPS: 5
 MAX_SESSION_LENGTH_SEC: 36000
 MAX_SESSION_IDLE_SEC: 7200
 ACCOUNT_LIFETIME_DAYS: 365
-WORKSPACE_PROVISION_DEMO_OBJECTS: Y
+WORKSPACE_PROVISION_DEMO_OBJECTS: "Y"

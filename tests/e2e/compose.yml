@@ -1,0 +1,40 @@
+services:
+
+  db:
+    volumes:
+      - ./tests/e2e/sql:/e2e/sql:ro
+
+  ords:
+    volumes:
+      - ./tests/e2e/sql:/e2e/sql:ro
+
+  playwright:
+    profiles:
+      - e2e
+    build:
+      context: ./tests/e2e/ui
+    init: true
+    ipc: host
+    user: ${HOST_UID:-1000}:${HOST_GID:-1000}
+    environment:
+      ORDS_BASE_URL: http://ords:8080
+
+      APEX_ADMIN_PATH: ${E2E_APEX_ADMIN_PATH:-/ords/apex_admin}
+      APEX_ADMIN_USER: ${E2E_APEX_ADMIN_USER:-ADMIN}
+      APEX_ADMIN_PASSWORD: ${E2E_APEX_ADMIN_PASSWORD:?E2E_APEX_ADMIN_PASSWORD is required}
+      APEX_ADMIN_SUCCESS_TEXT: ${E2E_APEX_ADMIN_SUCCESS_TEXT:-Administration Services}
+
+      APEX_WORKSPACE_PATH: ${E2E_APEX_WORKSPACE_PATH:-/ords/apex}
+      APEX_WORKSPACE: ${E2E_APEX_WORKSPACE:-SANDBOX}
+      APEX_WORKSPACE_USER: ${E2E_APEX_WORKSPACE_USER:-ADMIN}
+      APEX_WORKSPACE_PASSWORD: ${E2E_APEX_WORKSPACE_PASSWORD:?E2E_APEX_WORKSPACE_PASSWORD is required}
+      APEX_WORKSPACE_SUCCESS_TEXT: ${E2E_APEX_WORKSPACE_SUCCESS_TEXT:-App Builder}
+
+      DATABASE_ACTIONS_USER: ${E2E_SCHEMA:-WKSP_SANDBOX}
+      DATABASE_ACTIONS_PASSWORD: ${E2E_SCHEMA_PASSWORD:?E2E_SCHEMA_PASSWORD is required}
+
+    volumes:
+      - ./tests/e2e/artifacts/playwright:/tests/artifacts
+    depends_on:
+      ords:
+        condition: service_healthy

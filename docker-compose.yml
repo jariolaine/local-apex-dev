@@ -8,52 +8,73 @@ x-health-defaults: &health-defaults
   interval: 1m
   timeout: 15s
   retries: 5
-  start_period: 5m
-  start_interval: 5s
+  start_period: 30m
+  start_interval: 15s
 
 services:
 
   db:
     container_name: db-26ai-free
-    image: container-registry.oracle.com/database/free:latest
+    image: container-registry.oracle.com/database/free:${DB_VERSION_TAG:-latest}
     restart: unless-stopped
     logging: *default-logging
     environment:
-      - ORACLE_PWD=${ORACLE_PWD}
+      - ORACLE_PWD=${ORACLE_PWD:-}
       - ENABLE_ARCHIVELOG=${ENABLE_ARCHIVELOG:-FALSE}
       - ENABLE_FORCE_LOGGING=${ENABLE_FORCE_LOGGING:-FALSE}
     ports:
-      - 127.0.0.1:${HOST_DB_PORT:-1521}:1521/tcp
+      - ${HOST_DB_BINDING:-127.0.0.1:1521}:1521/tcp
     volumes:
-      - ./oradata:/opt/oracle/oradata
+      - oradata:/opt/oracle/oradata
+      - apex_files:/opt/oracle/apex
       - ./db-startup:/opt/oracle/scripts/startup:ro
+      - ./ssl/ca.cer:/home/oracle/ssl/local-ca.cer:ro
 
   ords:
     container_name: ords-node-1
-    image: container-registry.oracle.com/database/ords:latest
+    image: container-registry.oracle.com/database/ords:${ORDS_VERSION_TAG:-latest}
     restart: unless-stopped
     logging: *default-logging
     healthcheck:
-      test: [ "CMD-SHELL", "curl -k -f http://localhost:8080/ords/_/landing || exit 1" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:8080/ords/_/landing || exit 1" ]
       <<: *health-defaults
     environment:
       - DEBUG=${DEBUG:-}
-      - ORACLE_PWD=${ORACLE_PWD}
+      - ORACLE_PWD=${ORACLE_PWD:-}
       - DBHOST=${DBHOST:-db-26ai-free}
       - DBPORT=${DBPORT:-1521}
       - DBSERVICENAME=${DBSERVICENAME:-FREEPDB1}
       - APEX_ADMIN_USER_NAME=${APEX_ADMIN_USER_NAME:-}
       - APEX_ADMIN_USER_PWD=${APEX_ADMIN_USER_PWD:-}
       - APEX_ADMIN_USER_EMAIL=${APEX_ADMIN_USER_EMAIL:-}
-      - OLLAMA_PULL_MODELS=${OLLAMA_PULL_MODELS:-}
     ports:
-      - 127.0.0.1:${HOST_ORDS_PORT:-8181}:8080/tcp
+      - ${HOST_ORDS_BINDING:-127.0.0.1:8181}:8080/tcp
     volumes:
-      - ./apex:/opt/oracle/apex
-      - ./ords-config:/etc/ords/config
+      - ords_config:/etc/ords/config
+      - apex_files:/opt/oracle/apex
       - ./ords-entrypoint.d:/ords-entrypoint.d:ro
       - ./apex_workspaces.yaml:/home/oracle/apex_workspaces.yaml:ro
       - ./apex_instance_parameters.yaml:/home/oracle/apex_instance_parameters.yaml:ro
     depends_on:
       db:
         condition: service_healthy
+
+  # Available only through the init profile for explicit setup runs.
+  setup:
+    container_name: local-apex-dev-setup
+    image: alpine:${ALPINE_VERSION_TAG:-latest}
+    profiles:
+      - init
+    working_dir: /workspace
+    volumes:
+      - .:/workspace                      # Host bind mount for accessing scripts, templates, and store generated TLS certificates.
+      - oradata:/volumes/oradata          # Named volume for Oracle database.
+      - ords_config:/volumes/ords-config  # Named volume for ORDS configuration.
+      - apex_files:/volumes/apex          # Named volume for APEX installation files.
+    command: >
+      sh -c "apk add --no-cache bash curl unzip openssl && chmod u+x ./scripts/setup.sh && ./scripts/setup.sh"
+
+volumes:
+  oradata:
+  apex_files:
+  ords_config:

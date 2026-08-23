@@ -8,14 +8,14 @@ x-health-defaults: &health-defaults
   interval: 1m
   timeout: 15s
   retries: 5
-  start_period: 15m
-  start_interval: 5s
+  start_period: 30m
+  start_interval: 15s
 
 services:
 
   ollama:
     container_name: ollama-llm
-    image: ollama/ollama:latest
+    image: ollama/ollama:${OLLAMA_VERSION_TAG:-latest}
     restart: unless-stopped
     logging: *default-logging
     healthcheck:
@@ -25,17 +25,40 @@ services:
       # https://docs.ollama.com/troubleshooting
       # - OLLAMA_DEBUG=${OLLAMA_DEBUG:-2}
       # https://mintlify.wiki/ollama/ollama/advanced/environment-variables
-      - OLLAMA_CONTEXT_LENGTH=${OLLAMA_CONTEXT_LENGTH:-32768}
+      - OLLAMA_CONTEXT_LENGTH=${OLLAMA_CONTEXT_LENGTH:-8192}
       - OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:-1h}
       - OLLAMA_FLASH_ATTENTION=${OLLAMA_FLASH_ATTENTION:-1}
       - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-1}
       - OLLAMA_KV_CACHE_TYPE=${OLLAMA_KV_CACHE_TYPE:-q8_0}
+      - OLLAMA_NO_CLOUD=${OLLAMA_NO_CLOUD:-1}
     volumes:
-      - ./ollama:/root/.ollama
+      - ollama_data:/root/.ollama
 
-  ords:
+  nginx:
+    container_name: ollama-api-gateway
+    image: nginx:${NGINX_VERSION_TAG:-alpine}
+    restart: unless-stopped
+    logging: *default-logging
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -k -f https://localhost || exit 1" ]
+      <<: *health-defaults
     environment:
-      - OLLAMA_PULL_MODELS=${OLLAMA_PULL_MODELS:-}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
+    volumes:
+      - ./nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ./ssl/fullChain.cer:/etc/nginx/ssl/fullChain.cer:ro
+      - ./ssl/server.key:/etc/nginx/ssl/server.key:ro
     depends_on:
       ollama:
         condition: service_healthy
+
+  db:
+    environment:
+      - OLLAMA_PULL_MODELS=${OLLAMA_PULL_MODELS:-}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
+    depends_on:
+      ollama:
+        condition: service_healthy
+
+volumes:
+  ollama_data:

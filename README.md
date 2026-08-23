@@ -1,166 +1,364 @@
 # Local Oracle 26ai Free, APEX & Ollama Dev Environment
 
-A beginner-friendly Docker Compose setup for running a local Oracle Database 26ai Free instance with ORDS, APEX, and Ollama for local Large Language Models (LLMs).
+Docker Compose setup for running Oracle Database 26ai Free, ORDS, APEX,
+and Ollama for local large language models (LLMs), with an internal
+HTTPS gateway that allows APEX and DBMS_CLOUD in Oracle Database to
+access Ollama.
 
-This project automates the entire process: downloading, installing, and configuring APEX within the database container on startup, while providing a ready-to-use local AI endpoint.
+The project automates the main setup tasks:
 
-> **Note:** This environment is intended strictly for development and learning purposes.
+- A temporary setup container prepares configuration files, Docker volumes,
+  local TLS certificates, and—unless disabled—APEX installation files.
+- Database startup scripts install and configure DBMS_CLOUD and create or
+  reuse an Oracle wallet for HTTPS connections.
+- The ORDS container installs or upgrades APEX when APEX installation
+  files are available.
+- When Ollama is enabled, selected models are downloaded in the background
+  while APEX is being installed.
+
+> **Note:** This environment is intended strictly for local development,
+testing, and learning. It is not designed or supported for production use.
 
 ## Prerequisites
 
-*   **Docker Engine** (with the `docker compose` plugin).
-*   **Linux Tools**: `curl` and `unzip` are required for the automated setup script.
-*   **Optional**: NVIDIA Container Toolkit (only if you intend to enable GPU acceleration for Ollama).
+- **Docker Desktop** on Windows or macOS, or **Docker Engine** on Linux,
+  with the `docker compose` plugin.
+- **Git** for cloning this repository.
+- **Optional, Linux only:** NVIDIA Container Toolkit when using
+  Ollama with an NVIDIA GPU.
+
+Ollama models may require significant memory, disk space, and download time.
+Choose models that are suitable for your computer.
 
 ## Quick Start
 
-To begin, clone this repository to your local machine:
+Clone this repository:
 
-```bash
+```console
 git clone https://github.com/jariolaine/local-apex-dev.git
 cd local-apex-dev
 ```
 
-### Automated Setup (Recommended)
+### Run Automatic Setup
 
-For Linux users (or Windows/macOS users utilizing WSL or the macOS Terminal), a single script handles all initialization tasks:
-- Generating config files from templates.
-- Creating persistent volume directories.
-- Downloading the latest Oracle APEX and extracting it.
+The setup container prepares the local configuration files, initializes
+Docker named volumes, downloads Oracle APEX installation files when required,
+and ensures that the TLS certificates required by the internal HTTPS gateway
+are available.
 
-Run automatic setup:
+Windows & macOS:
 
-```bash
-chmod u+x ./setup.sh
-./setup.sh
+```console
+docker compose run --rm setup
 ```
 
-### Manual Setup (Optional)
+Linux:
 
-If you prefer manual control or are on a platform where you cannot execute `setup.sh`:
-
-1.  **Environment Variables**: Copy `env.template` to `.env`.
-2.  **APEX Instance Parameters**: Copy `apex_instance_parameters.yaml.template` to `apex_instance_parameters.yaml`.
-3.  **APEX Workspaces**: Copy `apex_workspaces.yaml.template` to `apex_workspaces.yaml`.
-
-Download the [latest Oracle APEX](https://download.oracle.com/otn_software/apex/apex-latest.zip), and extract it into a directory named `apex`.
-
-Linux users must give permission to the persistent volume directories:
-
-```bash
-mkdir -p ./oradata ./ords-config
-chgrp -R 54321 ./oradata ./ords-config ./apex
-chmod g+w ./oradata ./ords-config ./apex
-chmod -R g+r ./oradata ./ords-config ./apex
-chmod -R go-wx+rX ./apex/images
-chmod -R +r ./db-startup ./ords-entrypoint.d
+```console
+docker compose run --rm \
+  -e HOST_UID=$(id -u) \
+  -e HOST_GID=$(id -g) \
+  setup
 ```
 
-### Start Containers
+> **Note:** The setup may take some time while Docker downloads the required
+  image and the container downloads and extracts APEX installation files.
 
-> **Important**: Review and update your `.env`, `apex_instance_parameters.yaml`, and `apex_workspaces.yaml` files
-> to match your environment requirements (especially passwords) before proceeding.
+#### Skip APEX Installation
 
-> **Ollama AI Support:** By default, the environment starts *without* Ollama to save system resources.
-> To enable local AI capabilities (for either CPU or NVIDIA GPU), open your `.env` file
-> and uncomment the desired `COMPOSE_FILE` option before starting the containers.
+If you don't need APEX, you can skip download by passing environment variable
+`INSTALL_APEX=N`.
 
-Start containers:
+> **Note:** `INSTALL_APEX=N` only skips downloading APEX installation files.
+> It does not remove existing APEX files or uninstall APEX from
+> an existing database.
+> If the initial setup was run with APEX disabled,
+> run setup again without `INSTALL_APEX=N` to prepare the APEX files.
+> APEX will then be installed during the next Database and ORDS startup.
 
-```bash
+Windows & macOS:
+
+```console
+docker compose run --rm -e INSTALL_APEX=N setup
+```
+
+Linux:
+
+```console
+docker compose run --rm \
+  -e HOST_UID=$(id -u) \
+  -e HOST_GID=$(id -g) \
+  -e INSTALL_APEX=N  \
+  setup
+```
+
+### Review the Configuration
+
+Before starting the environment, review these generated files:
+
+- `.env`
+- `apex_instance_parameters.yaml`
+- `apex_workspaces.yaml`
+
+At minimum, set ORACLE_PWD in `.env`.
+
+> **Warning:** The generated files may contain plaintext development
+  credentials. Do not commit them to source control or reuse their passwords
+  in another environment.
+
+Ollama and the HTTPS gateway are disabled by default.
+To enable them, open `.env` and uncomment either
+the CPU or NVIDIA GPU `COMPOSE_FILE` option.
+
+### Start the Containers
+
+```console
 docker compose up -d
 ```
 
-> **Note:** The first startup will take significantly longer.
-> Docker must first download (pull) the required container images,
-> and then the system must set up the database and install APEX from scratch into the fresh Oracle database.
-> Subsequent startups are much faster.
+The first startup takes longer because Docker downloads the required images,
+the database scripts configure missing components.
+When APEX installation files are available, ORDS installs or upgrades
+APEX when required.
 
-#### Checking APEX Installation Progress
+Check the container status:
 
-You can monitor the background installation process in two ways:
-
-To watch the detailed APEX database installation in real-time, run:
-
-```bash
-docker exec -it ords-node-1 tail -f /tmp/install_logs/apex_install.log
+```console
+docker compose ps
 ```
 
-To watch the general ORDS server startup logs, run:
+Follow the ORDS startup log:
 
-```bash
-docker logs -f ords-node-1
+```console
+docker compose logs -f ords
 ```
 
-> **Tip:** You can press `Ctrl + C` at any time to exit the log viewer.
-> This will not stop the installation running in the background.
+Follow the detailed APEX installation log:
 
-You will know the setup is fully complete and ready to use when the log output settles and indicates that the Oracle REST Data Services server has started.
-
-Alternatively, you can wait for both containers to show as `(healthy)`:
-
-```bash
-docker ps -f name=db-26ai-free -f name=ords-node-1
+```console
+docker compose exec -it ords \
+  tail -f /tmp/install_logs/apex_install.log
 ```
 
-### Accessing Your Environment
+Press `Ctrl+C` to stop viewing a log. This does not stop the containers.
 
-Once running, access your environment at:
+The APEX web interface is ready when the ORDS container reports healthy.
 
+When Ollama is enabled, large model downloads may continue after APEX becomes
+available.
 
-*   **APEX Administration Service**: [http://localhost:8181/ords/apex_admin](http://localhost:8181/ords/apex_admin)
-    *   **Credentials**: Instance admin user name and user password are defined in the `.env` file.
-*   **APEX Development Service**: [http://localhost:8181/ords/apex](http://localhost:8181/ords/apex)
-    *   **Credentials**: Workspace names and user credentials are defined in the `apex_workspaces.yaml` file.
-*   **Database (SQLcl)**: Connect as the SYSTEM user, for example:
-    ```bash
-    docker exec -it ords-node-1 sh -c 'sql -L system/$ORACLE_PWD@$DBHOST:$DBPORT/$DBSERVICENAME'
-    ```
-*   **Ollama API (Internal):** Accessible from within the Oracle Database via `http://ollama:11434/`.
+### Access the Environment
 
-### Stop Containers
+- **Database Actions:** [http://localhost:8181/ords/sql-developer](http://localhost:8181/ords/sql-developer)
+  - Sign in as `PDBADMIN` using `ORACLE_PWD` from `.env`.
+- **Database administration with SQLcl:**
 
-Stop containers when finished:
+  ```console
+  docker compose exec -it ords sh -c \
+    'sql -L system/$ORACLE_PWD@$DBHOST:$DBPORT/$DBSERVICENAME'
+  ```
 
-```bash
+When APEX is installed:
+
+- **APEX Administration Service:** [http://localhost:8181/ords/apex_admin](http://localhost:8181/ords/apex_admin)
+  - The administrator credentials are configured in `.env`.
+- **APEX Development Service:** [http://localhost:8181/ords/apex](http://localhost:8181/ords/apex)
+  - Workspace and user credentials are configured in `apex_workspaces.yaml`.
+
+When Ollama is enabled, Oracle Database accesses Ollama through
+the internal HTTPS gateway at:
+
+```text
+https://ollama-api-gateway
+```
+
+### Stop the Containers
+
+```console
 docker compose down
 ```
 
-## Configuration Files Overview
+This removes the containers but preserves data stored in Docker named volumes.
 
-This environment relies on three primary configuration files to automate the provisioning of your Oracle Database, APEX, ORDS, and Ollama containers. Below is a summary of each file and the key topics they control.
+## Configuration
 
+### Environment Settings
 
-### The Environment File (`.env`)
+The `.env` file contains:
 
-This file defines the core system passwords, connection settings, and hardware tuning variables. It is the foundation of your Docker Compose deployment.
+- Database and APEX administrator credentials.
+- Optional database and ORDS host port bindings.
+- Optional ORDS debug logging.
+- Optional archive logging and force logging settings.
+- Optional Docker Compose files for CPU or NVIDIA GPU support.
+- Ollama model download and performance settings.
+- Optional image tags for the Database, ORDS, Ollama, Nginx, and
+  setup container.
 
-**Key Topics:**
+### APEX Instance Parameters
 
-* **Database & ORDS Security:** Sets the master `ORACLE_PWD` used for the SYS, SYSTEM, and PDBADMIN database users.
-* **ORDS Connection Settings:** Configures how the REST Data Services communicate with the database,
-including hostnames, ports, service names, and debug logging.
-* **Database Startup Features:** Offers optional toggles for advanced recovery features like Archive Logging and Force Logging.
-* **APEX Administration:** Defines the username, password, and email for the main APEX Instance Administrator (INTERNAL workspace).
-* **Ollama Performance Tuning:** Includes settings to optimize local Large Language Models based on your available RAM/VRAM,
-such as context length, keep-alive duration, flash attention, and parallel request limits.
-* **Ollama Model Auto-Pull:** Uses the `OLLAMA_PULL_MODELS` variable to define a comma-separated list of models
-(e.g., `llama3.1:8b,phi3:mini`) that will automatically download in the background when the environment starts.
+`apex_instance_parameters.yaml` defines global APEX instance settings.
 
----
+Configured values are applied during ORDS startup, so you can update the file
+and restart the environment to apply changes.
 
-### APEX Instance Parameters (`apex_instance_parameters.yaml`)
+### APEX Workspaces
 
-This file dictates the global configuration settings applied to the entire Oracle APEX instance.
-These settings are applied during every startup, allowing you to easily modify instance parameters over time.
+`apex_workspaces.yaml` defines workspaces, database schemas, workspace users,
+developer privileges, and workspace parameters.
 
----
+New workspaces are created automatically. When creating a workspace,
+its configured database schema is created if it does not already exist.
 
-### APEX Workspaces (`apex_workspaces.yaml`)
+Existing workspaces are not recreated. Their schema association and users
+are not automatically changed, but configured workspace parameters
+are reapplied during startup.
 
-This file automates the creation and configuration of individual APEX workspaces and their associated users.
+Newly created schemas are REST-enabled and granted the
+`DB_DEVELOPER_ROLE` and `CLOUD_USER_ROLE`.
 
-**Key Topics:**
-* **Schema Provisioning:** Maps workspaces to specific database schemas. If a schema does not exist, the setup automatically creates it with the necessary privileges and enables REST. If it already exists, it is associated with the workspace without modifying its existing state.
-* **Workspace Users:** Defines administrative and developer accounts for each workspace, including their emails, initial passwords, and whether they must change their password on the first login.
-* **Workspace-Level Parameters:** Allows you to apply specific settings to individual workspaces.
+## How It Works Under the Hood
+
+### Setup Container
+
+The temporary `setup` container performs tasks that would otherwise require
+utilities such as `curl`, `unzip`, and `openssl` on the host.
+
+It prepares the configuration files, APEX files, named volume permissions,
+and the local CA and server certificate used by the HTTPS gateway.
+
+### Database Startup
+
+The database container executes the scripts in `db-startup/` in numeric order.
+
+The scripts:
+
+- Adjust Oracle listener and TNS hostname configuration for
+  container networking.
+- Start requested Ollama model downloads in the background, allowing them to
+  run while the ORDS container installs APEX.
+- Install or update the `DBMS_CLOUD` package family when required.
+- Configure Network Access Control Lists (ACLs) and the `CLOUD_USER_ROLE`.
+- Create or reuse the Oracle wallet for outbound HTTPS connections.
+
+Where appropriate, the scripts check existing state and avoid repeating
+provisioning that has already completed.
+
+The `EXECUTE` privilege is granted to the `CLOUD_USER_ROLE` on the
+following packages:
+
+- `DBMS_CLOUD`
+- `DBMS_CLOUD_REPO`
+- `DBMS_CLOUD_PIPELINE`
+- `DBMS_CLOUD_NOTIFICATION`
+- `DBMS_CLOUD_AI`
+- `DBMS_CLOUD_AI_AGENT`
+
+### ORDS Startup
+
+The ORDS container runs the APEX installation into Oracle Database
+when required.
+
+It then executes the scripts in `ords-entrypoint.d/` in numeric order to
+configure ORDS, apply APEX instance parameters, and provision the configured
+workspaces, schemas, users, and workspace parameters.
+
+## Upgrade APEX
+
+By default the environment setup container uses the latest APEX download link.
+Once initial setup has run, a new APEX version will not be downloaded.
+To force a new version download, set `FORCE_DOWNLOAD_LATEST_APEX`
+environment variable and run setup again.
+If the downloaded APEX version is newer than the installed version,
+ORDS upgrades APEX during the next environment startup.
+
+Stop the project containers before refreshing the APEX installation files:
+
+```console
+docker compose down
+```
+
+Windows & macOS:
+
+```console
+docker compose run --rm -e FORCE_DOWNLOAD_LATEST_APEX=Y setup
+```
+
+Linux:
+
+```console
+docker compose run --rm \
+  -e HOST_UID=$(id -u) \
+  -e HOST_GID=$(id -g) \
+  -e FORCE_DOWNLOAD_LATEST_APEX=Y \
+  setup
+```
+
+Then restart project:
+
+```console
+docker compose up -d
+```
+
+## Troubleshooting
+
+Check the current container state:
+
+```console
+docker compose ps
+```
+
+View database logs:
+
+```console
+docker compose logs -f db
+```
+
+View ORDS startup logs:
+
+```console
+docker compose logs -f ords
+```
+
+A container that remains unhealthy usually provides the most useful error
+information in its service log.
+
+To remove persistent Docker data and regenerate the project configuration
+files, stop the containers and remove the named volumes.
+
+> **Warning:** The `-v` command permanently removes the database, APEX files,
+  ORDS configuration, and downloaded Ollama models.
+
+```console
+# DANGER ZONE: This permanently removes all named volumes.
+docker compose down -v
+```
+
+Run setup again:
+
+> **Important:** You must stop all project containers before running
+  the setup again.
+> By default, existing configuration files and valid TLS certificates are
+  preserved. To explicitly overwrite them, pass one or both of these
+  environment variables to the setup container:
+>
+> - `RESET_CONFIGURATION_FILES=Y`
+> - `ROTATE_CERTIFICATES=Y`
+
+Windows & macOS:
+
+```console
+docker compose run --rm -e RESET_CONFIGURATION_FILES=Y setup
+```
+
+Linux:
+
+```console
+docker compose run --rm \
+  -e HOST_UID=$(id -u) \
+  -e HOST_GID=$(id -g) \
+  -e RESET_CONFIGURATION_FILES=Y \
+  setup
+```
+
+Review the regenerated configuration and start the environment.

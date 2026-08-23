@@ -1,0 +1,8 @@
+services:
+
+  lint:
+    build:
+      context: .
+    working_dir: /repo
+    volumes:
+      - ../..:/repo:ro

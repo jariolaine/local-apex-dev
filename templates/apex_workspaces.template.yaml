@@ -1,92 +1,115 @@
+---
 # ==============================================================================
 # APEX Workspace Configuration
 #
-# This file defines your APEX workspaces, including their database schemas,
+# This file defines APEX workspaces, including their database schemas,
 # administrative users, and parameters.
 #
-# IMPORTANT: Existing workspaces will not be modified.
+# IMPORTANT: Existing workspaces are not recreated.
+# Workspace schema association and users are not changed automatically,
+# but configured workspace parameters are reapplied during ORDS container startup.
 # ==============================================================================
 #
-# --- ⚠️ IMPORTANT YAML RULES FOR BEGINNERS ⚠️ ---
-# 1. SPACING MATTERS: YAML relies on exact spaces (indentation). Do not use
-#    the Tab key. Keep the indentation exactly as shown in the examples below.
-# 2. NO INLINE COMMENTS: Do not put comments on the same line as your settings.
-#    (e.g., 'user_name: ADMIN # This is a comment' will cause an error).
-# 3. VALUES: You can leave values blank, or wrap them in quotes ("" or '').
+# --- ⚠️ IMPORTANT YAML SYNTAX RULES ⚠️ ---
+# 1.  SPACING MATTERS: YAML relies on exact spaces (indentation). Do not use
+#     the Tab key. Keep the indentation exactly as shown in the examples below.
+# 2.  NO INLINE COMMENTS: Inline comments are not supported.
+#     Text after a '#' on a setting line may be interpreted as part of the value.
+#     Put comments on their own lines instead.
+# 3.  VALUES: Values may be unquoted, quoted with "" or '', or left blank.
 #
 
-# Define your list of APEX workspaces below:
+# Define list of APEX workspaces below:
 workspaces:
 
   # ==========================================================================
   # WORKSPACE 1 DEFINITION (Example)
   # ==========================================================================
-  - workspace_name: ws1
+  - workspace_name: SANDBOX
 
     # The database schema associated with this workspace.
     # Defaults to 'WKSP_' + workspace name if left blank.
-    # - If the schema does not exist in the database, it will be created with the required privileges and REST enabled.
+    # - If the schema does not exist in the database, it will be created, REST-enabled,
+    #   and automatically granted the DB_DEVELOPER_ROLE and CLOUD_USER_ROLE.
+    #
     # - If the schema already exists, it will be associated with the workspace as is.
-    schema_name: wksp_ws1
+    schema_name:
 
     # The password for the database schema.
-    # Defaults to your ORACLE_PWD from the .env file if left blank.
+    # Defaults to ORACLE_PWD from the .env file if left blank.
     # Note: Password must meet Oracle's strong password requirements.
-    schema_password: OraCle#26ai
+    schema_password:
 
-    # Define the administrative users for this specific workspace.
+    # Define the users for this specific workspace.
     workspace_users:
 
-      # Username (Defaults to 'ADMIN' if left blank).
+      # Workspace APEX username.
+      # Note: Usernames must be unique within the workspace.
       - user_name: ADMIN
 
-      # Optional: User email address.
-        user_email: admin@example.com
+        # Optional: Initial login password for the user.
+        # Defaults to ORACLE_PWD from the .env file if left blank.
+        # Note: Password must meet Oracle's strong password requirements.
+        user_password:
 
-      # Optional: A brief description of this user account.
+        # User privileges.
+        # Common privilege configurations:
+        # - Blank - End user.
+        # - "CREATE:DATA_LOADER:EDIT:HELP:MONITOR:SQL" - Developer.
+        # - "ADMIN:CREATE:DATA_LOADER:EDIT:HELP:MONITOR:SQL" - Administrator.
+        developer_privs: "ADMIN:CREATE:DATA_LOADER:EDIT:HELP:MONITOR:SQL"
+
+        # Optional: User email address.
+        # NOTE: This environment does not provide an SMTP server for sending emails.
+        #       If you wish to send emails (e.g., for password recovery),
+        #       you must configure an external SMTP server in the APEX instance settings.
+        user_email:
+
+        # Optional: A brief description of this user account.
         user_description: Workspace administrator account.
 
-      # Optional: Initial login password for the user.
-      # Defaults to your ORACLE_PWD from the .env file if left blank.
-      # Note: Password must meet Oracle's strong password requirements.
-        user_password: OraCle#26ai
-
-      # Optional: Force the user to change their password on first login (Y or N).
-      # Defaults to 'Y' if left blank. 'N' is convenient for local development.
-        change_password_on_first_use: N
+        # Optional: Force the user to change their password on first login (Y or N).
+        # Defaults to 'Y' if left blank. 'N' is convenient for local development.
+        change_password_on_first_use: "N"
 
       # ----------------------------------------------------------------------
-      # Need more admin users? Uncomment the lines below and fill in the details.
-      # Make sure the dashes and spacing align exactly with the user above!
+      # Need more users? Uncomment the lines below and fill in the details.
+      # Make sure the dashes and spacing align exactly with the user above.
       # ----------------------------------------------------------------------
-      # - user_name: admin2
-      #   user_email: admin2@example.com
-      #   user_description: Workspace admin user 2
+      # - user_name: DEVELOPER1
       #   user_password: password
-      #   change_password_on_first_use: Y
+      #   user_email: admin2@example.com
+      #   user_description: Workspace developer user 1
+      #   change_password_on_first_use: "Y"
+      #   developer_privs: "CREATE:DATA_LOADER:EDIT:HELP:MONITOR:SQL"
 
     # Define parameters that apply to this workspace.
+    # Note: Parameters are reapplied during every ORDS container startup.
     # See all available parameters here:
     # https://docs.oracle.com/en/database/oracle/apex/26.1/aeapi/APEX_INSTANCE_ADMIN.Available-Parameter-Values.html#GUID-75DCF658-5A76-4E81-B12D-04E254A3D80A__GUID-963D6D01-0CA4-415F-821E-0E8F87166952
     workspace_parameters:
-        ENV_BANNER_ENABLE: Y
-        ENV_BANNER_COLOR: accent-16
-        ENV_BANNER_LABEL: Workspace 1
-        ENV_BANNER_POS: TOP
-        EXPIRE_FND_USER_ACCOUNTS: Y
+      ENV_BANNER_ENABLE: "Y"
+      ENV_BANNER_COLOR: accent-16
+      ENV_BANNER_LABEL: Workspace 1
+      ENV_BANNER_POS: TOP
+      EXPIRE_FND_USER_ACCOUNTS: "N"
+      MAX_WEBSERVICE_REQUESTS: 2000
 
   # ==========================================================================
   # WORKSPACE 2 DEFINITION (Example - Commented Out)
   # ==========================================================================
-  # - workspace_name: ws2
-  #   schema_name: wksp_ws2
+  # - workspace_name: WORKSPACE2
+  #   schema_name: WKSP_WS2
   #   schema_password: password
   #   workspace_users:
-  #     - user_name: ws2_admin
+  #     - user_name: ADMIN
   #       user_password: password
-  #       change_password_on_first_use: Y
+  #       user_email: admin@example.com
+  #       user_description: The workspace admin user
+  #       change_password_on_first_use: "Y"
+  #       developer_privs: "ADMIN:CREATE:DATA_LOADER:EDIT:HELP:MONITOR:SQL"
   #   workspace_parameters:
-  #       ENV_BANNER_ENABLE: Y
-  #       ENV_BANNER_COLOR: accent-15
-  #       ENV_BANNER_LABEL: Workspace 2
-  #       ENV_BANNER_POS: TOP
+  #     ENV_BANNER_ENABLE: "Y"
+  #     ENV_BANNER_COLOR: accent-15
+  #     ENV_BANNER_LABEL: Workspace 2
+  #     ENV_BANNER_POS: TOP

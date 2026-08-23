@@ -1,10 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -Eeuo pipefail
 
 # ==============================================================================
-# Oracle ORDS Configuration
+# ORDS Runtime Configuration
 #
-# Automates ORDS configuration.
+# Applies project-specific ORDS settings before the ORDS server starts.
 # ==============================================================================
 
-# ORDS_CONFIG="/etc/ords/config"
+# Limit the ORDS JDBC connection pool to 15 connections for this environment.
 ords config set jdbc.MaxLimit "15"
