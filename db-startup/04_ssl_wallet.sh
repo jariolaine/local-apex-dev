@@ -17,6 +17,7 @@ CA_DOWNLOAD_URL="https://objectstorage.us-phoenix-1.oraclecloud.com/p/KB63IAuDCG
 CA_CERT_DIR="${WORK_DIR}/standard-certificates"
 CA_CERT_ARCHIVE="${WORK_DIR}/dbc_certs.tar"
 LOCAL_CA_CERT="/home/oracle/ssl/local-ca.cer"
+LOCAL_CA_CERT_DN="CN=Local Docker CA"
 
 SSL_WALLET_DIR="${ORACLE_BASE%/}/oradata/ssl_wallet"
 SSL_WALLET_TMP="${SSL_WALLET_DIR}.new"
@@ -56,8 +57,8 @@ wallet_is_valid() {
 
   local_fp=$(openssl x509 -noout -fingerprint -sha256 -in "${LOCAL_CA_CERT}")
 
-  if ! orapki wallet export -wallet "${SSL_WALLET_DIR}" -pwd "${SSL_WALLET_PWD}" -dn "CN=Local Docker CA" -cert "${temp_cert}" &> /dev/null; then
-    echo "WARNING : Local CA certificate 'CN=Local Docker CA' not found in the existing wallet." >&2
+  if ! orapki wallet export -wallet "${SSL_WALLET_DIR}" -pwd "${SSL_WALLET_PWD}" -dn "${LOCAL_CA_CERT_DN}" -cert "${temp_cert}" &> /dev/null; then
+    echo "WARNING : Local CA certificate '${LOCAL_CA_CERT_DN}' not found in the existing wallet." >&2
     return 1
   fi
 
@@ -146,8 +147,8 @@ else
   fi
 
   # Export the local CA from the new wallet for validation.
-  if ! orapki wallet export -wallet "${SSL_WALLET_TMP}" -pwd "${SSL_WALLET_PWD}" -dn "CN=Local Docker CA" -cert "${WORK_DIR}/extracted_ca_tmp.cer" &> /dev/null; then
-    echo "ERROR : Local CA certificate 'CN=Local Docker CA' not found in the newly generated wallet." >&2
+  if ! orapki wallet export -wallet "${SSL_WALLET_TMP}" -pwd "${SSL_WALLET_PWD}" -dn "${LOCAL_CA_CERT_DN}" -cert "${WORK_DIR}/extracted_ca_tmp.cer" &> /dev/null; then
+    echo "ERROR : Local CA certificate '${LOCAL_CA_CERT_DN}' not found in the newly generated wallet." >&2
     return 1
   fi
 
